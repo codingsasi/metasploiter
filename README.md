@@ -7,7 +7,6 @@ Run Metasploit Framework in Docker. This is meant to be a quick setup to run you
 ```bash
 docker compose up -d
 docker compose attach msf
-# then: ./msfconsole
 ```
 
 Or a one-off interactive session:
