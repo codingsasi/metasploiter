@@ -1,0 +1,33 @@
+services:
+  msf:
+    build: .
+    image: metasploit-msf:local
+    environment:
+      DATABASE_URL: postgres://postgres@db:5432/msf
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 4444:4444
+      - 8080:8080
+    volumes:
+      - msf4-data:/home/msf/.msf4
+    stdin_open: true
+    tty: true
+
+  db:
+    image: postgres:10-alpine
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./docker/init-msf.sql:/docker-entrypoint-initdb.d/init-msf.sql
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:
+  msf4-data:

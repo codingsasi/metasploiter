@@ -1,0 +1,3 @@
+# Auto-connect to PostgreSQL database on startup
+<% if ENV['DATABASE_URL'] %>db_connect <%= ENV['DATABASE_URL'] %>
+<% end %>
