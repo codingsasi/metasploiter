@@ -1,22 +1,39 @@
+# Metasploit Framework in Docker with PostgreSQL.
+# Uses host network + host's /etc/hosts so you can reach any host on your machine or LAN.
+
 services:
-  msf:
-    build: .
-    image: metasploit-msf:local
-    environment:
-      DATABASE_URL: postgres://postgres@db:5432/msf
+  db-init:
+    image: postgres:10-alpine
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - 4444:4444
-      - 8080:8080
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        psql postgres://postgres@db:5432/postgres -tAc "SELECT 1 FROM pg_database WHERE datname='msf'" | grep -q 1 || \
+        psql postgres://postgres@db:5432/postgres -c "CREATE DATABASE msf"
+    restart: "no"
+
+  msf:
+    build: .
+    environment:
+      DATABASE_URL: postgres://postgres@127.0.0.1:5433/msf
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    network_mode: "host"
     volumes:
       - msf4-data:/home/msf/.msf4
+      - /etc/hosts:/etc/hosts:ro
     stdin_open: true
     tty: true
 
   db:
     image: postgres:10-alpine
+    ports:
+      - "5433:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./docker/init-msf.sql:/docker-entrypoint-initdb.d/init-msf.sql
